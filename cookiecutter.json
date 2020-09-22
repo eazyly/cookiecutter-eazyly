@@ -1,0 +1,59 @@
+{
+    "project_type": ["apiserver", "frontend", "helmchart", "ingress", "behaviour", "calculator", "other"],
+    "project_name": "",
+    "repo_name": "{{ cookiecutter.project_name.lower().replace(' ', '-').replace('_', '-') }}-{{ cookiecutter.project_type.lower().replace(' ', '-').replace('_', '-') }}",
+    "project_short_description": "{{ cookiecutter.repo_name.replace('-', ' ') }}",
+    
+    "framework": ["flask", "nodejs", "other"],
+    "use_alipine_base": ["y","n"],
+    "port": "8000",
+    "host_name": "api.ashutoshmishra.net",
+    
+    "version_control": ["github","bitbucket","gitlab"],
+    "git_username": "ashutoshdtu",
+    "full_name": "Ashutosh Mishra",
+    "email": "ashutoshdtu@gmail.com",
+    "git_organization": "eazyly",
+    
+    "organization_name": "Eazyly",
+    "organization_website": "https://eazyly.ashutoshmishra.net",
+    
+    "docker_registry": "hub.docker.com",
+    
+    "build_system": ["drone"],
+    "build_system_url": "https://drone.ashutoshmishra.net",
+
+    "release_date": "today",
+    "year_from": [
+        "2020",
+        "2019",
+        "2018",
+        "2017",
+        "2016",
+        "2015",
+        "2014",
+        "2013",
+        "2012",
+        "2011",
+        "2010",
+        "2009",
+        "2008",
+        "2007",
+        "2006",
+        "2005"
+    ],
+    "year_to": "{% now 'utc', '%Y' %}",
+    "version": "0.1.0",
+    "license": [
+        "BSD 2-Clause License",
+        "BSD 3-Clause License",
+        "MIT license",
+        "ISC license",
+        "Apache Software License 2.0",
+        "GNU Lesser General Public License v3 or later (LGPLv3+)",
+        "GNU Lesser General Public License v3 (LGPLv3)",
+        "GNU Lesser General Public License v2.1 or later (LGPLv2+)",
+        "GNU Lesser General Public License v2.1 (LGPLv2)",
+        "no"
+    ]
+}

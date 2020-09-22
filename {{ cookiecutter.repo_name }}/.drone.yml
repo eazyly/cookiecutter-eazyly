@@ -1,0 +1,152 @@
+pipeline:
+{% raw %}
+  notify_pre:
+    image: plugins/slack
+    webhook: https://hooks.slack.com/services/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
+    channel: monitoring
+    link_names: true
+    template:  "
+      :arrows_counterclockwise:
+      *BUILD STARTED*\n\n
+
+      <{{build.link}}|Build no. {{build.number}}> for *<${DRONE_REPO_LINK}|{{repo.owner}}/{{repo.name}}>*\n\n
+      
+      *Started:*\t\t<!date^{{build.started}}^{time}, {date_short_pretty}|few moments ago>
+      
+      *Commit:*\t\t<${DRONE_COMMIT_LINK}|{{build.branch}}:{{build.commit}}>
+      
+      *Author:*\t\t<@{{build.author}}>  (${CI_COMMIT_AUTHOR_EMAIL})
+      "
+    when:
+      status: [ success, failure ]
+      branch: [ release/* ]
+      event: push
+{% endraw %}
+{% if cookiecutter.framework == "flask" %}  test:
+    image: python:2.7.15-alpine3.8
+    commands:
+      - cd app
+      - apk add --no-cache build-base libffi-dev
+      - pip install -r requirements.txt
+      - pip install -e .
+    when:
+      branch: [ master, release/* ]
+      event: push
+
+  generate_swagger:
+    image: python:2.7.15-alpine3.8
+    commands:
+      - cd app
+      - apk add --no-cache build-base libffi-dev
+      - pip install click
+      - pip install -r requirements.txt
+      - pip install -e .
+      #- export HOST_NAME=api.staging.ashutoshmishra.net
+      #- python scripts/swagger-cli.py --outfile "src/docs/swagger.staging.json"
+      - export HOST_NAME={{ cookiecutter.host_name }}
+      - python scripts/swagger-cli.py --outfile "src/docs/swagger.json"
+    when:
+      branch: [ master, release/* ]
+      event: push
+
+  generate_angular_client: 
+    image: node:8
+    commands: 
+      - cd ./build/angular-client
+      - npm install -g ng-swagger-gen
+      - ng-swagger-gen -i ../../app/src/docs/swagger.json -o ./
+    when:
+      branch: [ master, release/* ]
+      event: push
+
+  # publish_angular_client:
+  #   image: plugins/npm
+  #   folder: ./build/angular-client
+  #   token: 26924435-de92-48b4-8707-8f52f49a2859
+  #   email: {{ cookiecutter.email }}
+  #   username: REPLACEME
+  #   password: REPLACEME
+  #   debug: true
+  #   when:
+  #     branch: release/*
+  #     event: push
+{% elif cookiecutter.framework == "nodejs" %}
+  test:
+    image: node:8
+    commands:
+      - cd app
+      - npm install
+      - npm test
+    when:
+      branch: [ master, release/* ]
+      event: push
+{% else %}{% endif %}
+  publish_docker:
+    image: plugins/docker
+    registry: {{ cookiecutter.docker_registry }}
+    auto_tag: true
+    repo: {{ cookiecutter.docker_registry }}/${DRONE_REPO}
+    secrets: [ docker_username, docker_password ]
+    when:
+      branch: [ master, release/* ]
+      event: push
+
+  deploy_helm_staging:
+    image: quay.io/ipedrazas/drone-helm
+    skip_tls_verify: true
+    chart: ./charts/${DRONE_REPO_NAME}
+    release: ${DRONE_REPO_NAME}
+    values: env.CI_REPO_NAME=${CI_REPO_NAME},env.CI_REPO_LINK=${CI_REPO_LINK},env.CI_COMMIT_LINK=${DRONE_COMMIT_LINK},env.CI_COMMIT_AUTHOR_EMAIL=${CI_COMMIT_AUTHOR_EMAIL},env.CI_BUILD_LINK=${DRONE_BUILD_LINK}
+    prefix: STAGING
+    secrets:
+      - staging_api_server
+      - staging_kubernetes_token
+    namespace: staging
+    wait: true
+    debug: false
+    when:
+      branch: master
+      event: push
+    
+  deploy_helm_prod:
+    image: quay.io/ipedrazas/drone-helm
+    skip_tls_verify: true
+    chart: ./charts/${DRONE_REPO_NAME}
+    release: ${DRONE_REPO_NAME}
+    # version: 2.0.0-rc.1
+    values: env.CI_REPO_NAME=${CI_REPO_NAME},env.CI_REPO_LINK=${CI_REPO_LINK},env.CI_COMMIT_LINK=${DRONE_COMMIT_LINK},env.CI_COMMIT_AUTHOR_EMAIL=${CI_COMMIT_AUTHOR_EMAIL},env.CI_BUILD_LINK=${DRONE_BUILD_LINK}
+    prefix: PROD
+    secrets:
+      - prod_api_server
+      - prod_kubernetes_token
+    namespace: prod
+    wait: true
+    debug: true
+    when:
+      branch: release/*
+      event: push
+{% raw %}
+  notify_post:
+    image: plugins/slack
+    webhook: https://hooks.slack.com/services/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
+    channel: monitoring
+    link_names: true
+    template: "
+      {{#success build.status}}:white_check_mark:{{else}}:no_entry:{{/success}} 
+      *BUILD {{uppercase build.status}}*\n\n
+
+      <{{build.link}}|Build no. {{build.number}}> for *<${DRONE_REPO_LINK}|{{repo.owner}}/{{repo.name}}>*\n\n
+      
+      *Started:*\t\t<!date^{{build.started}}^{time}, {date_short_pretty}|few moments ago>
+      
+      *Commit:*\t\t<${DRONE_COMMIT_LINK}|{{build.branch}}:{{build.commit}}>
+      
+      *Author:*\t\t<@{{build.author}}>  (${CI_COMMIT_AUTHOR_EMAIL})
+      "
+    when:
+      status: [ success, failure ]
+      event: push
+      branch: release/*
+{% endraw %}
+
+branches: master

@@ -1,0 +1,11 @@
+{{ cookiecutter.project_name }} is written and maintained by the following people:
+
+Development Lead
+````````````````
+
+- {{ cookiecutter.full_name }} <{{ cookiecutter.email }}>
+
+Patches and Suggestions
+```````````````````````
+
+- <your name here>

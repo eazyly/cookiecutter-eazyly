@@ -1,0 +1,11 @@
+name: {{ cookiecutter.repo_name }}
+home: {{ cookiecutter.organization_website }}
+version: {{ cookiecutter.version }}
+apiVersion: v1
+description: Helm chart for {{ cookiecutter.project_name }}.
+sources:
+- https://{{ cookiecutter.version_control }}.com/{{ cookiecutter.git_organization }}/{{ cookiecutter.repo_name }}
+maintainers:
+- name: {{ cookiecutter.full_name }}
+  email: {{ cookiecutter.email }}
+icon: {% if cookiecutter.project_type == "apiserver" %} http://chittagongit.com//images/rest-api-icon/rest-api-icon-17.jpg {% endif %}
